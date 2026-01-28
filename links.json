@@ -11,32 +11,32 @@
         {
           "label": "Catálogo de Bebidas",
           "url": "https://distribuidoramuniz.smartpos.app/",
-          "icon_image": "icones/catalogo.png"
+          "arquivo": "icons/catalogo.png"
         },
         {
           "label": "Localização",
           "url": "https://www.google.com/maps/search/?api=1&query=R.%20%C3%81lvaro%20Adolfo%2C%201003%20-%20Prainha%2C%20Santar%C3%A9m%20-%20PA%2C%2068010-295",
-          "icon_image": "icones/localização.jpg"
+          "arquivo": "icons/localizacao.jpg"
         },
         {
           "label": "WhatsApp",
           "url": "https://wa.me/5593992317979",
-          "icon_image": "icones/whatsapp.jpg"
+          "arquivo": "icons/whatsapp.jpg"
         },
         {
           "label": "Instagram",
           "url": "https://www.instagram.com/distrimuniz/",
-          "icon_image": "icones/instagram.jpg"
+          "arquivo": "icons/instagram.jpg"
         },
         {
           "label": "iFood",
           "url": "https://www.ifood.com.br/delivery/sua-loja",
-          "icon_image": "icones/ifood.png"
+          "arquivo": "icons/ifood.png"
         },
         {
           "label": "Zé Delivery",
           "url": "https://www.ze.delivery/",
-          "icon_image": "icones/zedelivery.webp"
+          "arquivo": "icons/zedelivery.webp"
         }
       ]
     }
