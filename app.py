@@ -131,7 +131,6 @@ def admin_login_ui() -> bool:
 def render_button(label: str, url: str, arquivo: str | None):
     label = (label or "").strip()
     url = (url or "").strip()
-    arquivo = (arquivo or "").strip()
 
     data_uri = build_data_uri(arquivo) if arquivo else None
     icon_html = "<span class='link-icon-fallback'>🔗</span>"
@@ -149,10 +148,6 @@ def render_button(label: str, url: str, arquivo: str | None):
         unsafe_allow_html=True,
     )
 
-    # Debug leve: avisa quando arquivo não existe
-    if arquivo and not (os.path.exists(arquivo) or os.path.exists("./" + arquivo)):
-        st.caption(f"⚠️ Ícone não encontrado: `{arquivo}`")
-
 
 # ----------------------------
 # Page config
@@ -168,6 +163,9 @@ title = site.get("title", "Muniz Distribuidora | Links")
 subtitle = site.get("subtitle", "Acesse nossos canais oficiais")
 
 
+# ----------------------------
+# Styles
+# ----------------------------
 st.markdown(
     f"""
     <style>
@@ -210,6 +208,7 @@ st.markdown(
         color: var(--cream) !important;
       }}
 
+      /* LOGO: círculo perfeito */
       .logo-wrap {{
         display: flex;
         justify-content: center;
@@ -253,6 +252,7 @@ st.markdown(
         opacity: 0.95;
       }}
 
+      /* Cards */
       a.link-card {{
         display: flex;
         align-items: center;
@@ -277,21 +277,30 @@ st.markdown(
                     0 0 0 7px rgba(237,158,31,0.10);
       }}
 
+      /* ✅ ÍCONE: fundo MARROM com degradê (pra logo preta aparecer) */
       .link-icon {{
         width: 52px;
         height: 52px;
         display: grid;
         place-items: center;
         border-radius: 16px;
-        background: rgba(11,7,6,1) !important;
-        border: 1px solid rgba(237,158,31,0.85);
         overflow: hidden;
+
+        background: radial-gradient(circle at 30% 30%,
+          rgba(237,158,31,0.25),
+          rgba(135,58,28,0.98) 55%,
+          rgba(11,7,6,0.90) 100%) !important;
+
+        border: 1px solid rgba(237,158,31,0.95);
+        box-shadow: inset 0 0 0 1px rgba(0,0,0,0.35);
       }}
+
       .link-icon-img {{
         width: 82%;
         height: 82%;
         object-fit: contain;
         display: block;
+        filter: drop-shadow(0 2px 6px rgba(0,0,0,0.55));
       }}
 
       .link-text {{
@@ -304,15 +313,18 @@ st.markdown(
         font-weight: 900;
       }}
 
+      /* Sidebar */
       section[data-testid="stSidebar"] {{
         background: rgba(11,7,6,0.92);
         border-right: 1px solid rgba(237,158,31,0.22);
       }}
 
+      /* Tabs */
       div[data-testid="stTabs"] button[aria-selected="true"] {{
         border-bottom: 3px solid var(--accent) !important;
       }}
 
+      /* Footer/Admin no final */
       .footer-admin {{
         margin-top: 26px;
         padding-top: 18px;
@@ -323,6 +335,9 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+# ----------------------------
+# Sidebar
+# ----------------------------
 with st.sidebar:
     st.header("⚙️ Configurações")
     st.caption("A lateral abre pelo botão (>>) no topo.")
@@ -331,6 +346,9 @@ with st.sidebar:
             st.session_state["admin_ok"] = False
             st.rerun()
 
+# ----------------------------
+# Logo + Hero
+# ----------------------------
 logo_path = find_logo_path()
 if logo_path:
     logo_uri = build_data_uri(logo_path)
@@ -356,6 +374,9 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+# ----------------------------
+# Tabs
+# ----------------------------
 if not tabs:
     tabs = [{"name": "Principais", "items": []}]
 
@@ -370,14 +391,15 @@ for idx, tab in enumerate(tabs):
             label = item.get("label", "Link")
             url = item.get("url", "")
             arquivo = item.get("arquivo")
-
             with cols[i % columns]:
                 if is_valid_url(url):
                     render_button(label, url, arquivo)
                 else:
                     st.warning(f"URL inválida em: {label}")
 
+# ----------------------------
 # Footer/Admin no final
+# ----------------------------
 st.markdown('<div class="footer-admin">', unsafe_allow_html=True)
 c1, c2 = st.columns([1, 2])
 with c1:
