@@ -1,6 +1,5 @@
 import json
 import os
-import re
 import base64
 from urllib.parse import urlparse
 
@@ -16,6 +15,9 @@ PALETTE = {
 }
 
 
+# ----------------------------
+# Data
+# ----------------------------
 def load_data() -> dict:
     if not os.path.exists(DATA_FILE):
         return {
@@ -25,15 +27,7 @@ def load_data() -> dict:
                 "columns": 2
             },
             "tabs": [
-                {
-                    "name": "Principais",
-                    "items": [
-                        {"label": "WhatsApp", "url": "https://wa.me/5591999999999", "icon": "💬"},
-                        {"label": "Instagram", "url": "https://instagram.com/suaempresa", "icon": "📷"},
-                        {"label": "iFood", "url": "https://www.ifood.com.br/delivery/sua-loja", "icon": "🍔"},
-                        {"label": "Zé Delivery", "url": "https://www.ze.delivery/", "icon": "🍺"},
-                    ],
-                }
+                {"name": "Principais", "items": []}
             ],
         }
 
@@ -54,11 +48,72 @@ def is_valid_url(url: str) -> bool:
         return False
 
 
-def read_logo_base64(path: str) -> str:
+# ----------------------------
+# Logo helpers
+# ----------------------------
+def find_logo_path() -> str | None:
+    # Seu GitHub está com logo.jpeg, então precisa considerar isso
+    for name in ["logo.png", "logo.jpg", "logo.jpeg"]:
+        if os.path.exists(name):
+            return name
+    return None
+
+
+def read_file_base64(path: str) -> str:
     with open(path, "rb") as f:
         return base64.b64encode(f.read()).decode("utf-8")
 
 
+# ----------------------------
+# Admin auth
+# ----------------------------
+def get_admin_password() -> str:
+    # 1) Streamlit Secrets (Cloud)
+    try:
+        if "ADMIN_PASSWORD" in st.secrets:
+            return str(st.secrets["ADMIN_PASSWORD"])
+    except Exception:
+        pass
+    # 2) Variável de ambiente (local)
+    return os.getenv("ADMIN_PASSWORD", "")
+
+
+def admin_gate() -> bool:
+    """Retorna True se o admin foi autenticado nesta sessão."""
+    if st.session_state.get("admin_ok"):
+        return True
+
+    admin_password = get_admin_password()
+    if not admin_password:
+        st.sidebar.error("Senha de admin não configurada (ADMIN_PASSWORD).")
+        return False
+
+    st.sidebar.subheader("🔒 Acesso Admin")
+    typed = st.sidebar.text_input("Senha", type="password", placeholder="Digite a senha do admin")
+
+    col1, col2 = st.sidebar.columns([1, 1])
+    with col1:
+        entrar = st.button("Entrar", use_container_width=True)
+    with col2:
+        limpar = st.button("Limpar", use_container_width=True)
+
+    if limpar:
+        st.session_state["admin_ok"] = False
+        st.rerun()
+
+    if entrar:
+        if typed == admin_password:
+            st.session_state["admin_ok"] = True
+            st.sidebar.success("Acesso liberado.")
+            st.rerun()
+        else:
+            st.sidebar.error("Senha incorreta.")
+    return False
+
+
+# ----------------------------
+# UI helpers
+# ----------------------------
 def render_button(label: str, url: str, icon: str):
     label = (label or "").strip()
     url = (url or "").strip()
@@ -86,11 +141,12 @@ site = data.get("site", {})
 tabs = data.get("tabs", [])
 
 columns = int(site.get("columns", 2))
-title = site.get("title", "Links")
-subtitle = site.get("subtitle", "")
+title = site.get("title", "Muniz Distribuidora | Links")
+subtitle = site.get("subtitle", "Acesse nossos canais oficiais")
+
 
 # ----------------------------
-# Styles
+# Styles (mais dourado e creme)
 # ----------------------------
 st.markdown(
     f"""
@@ -103,114 +159,131 @@ st.markdown(
       }}
 
       .stApp {{
-        background: var(--bg);
+        background:
+          radial-gradient(900px 450px at 50% 8%, rgba(237,158,31,0.22), rgba(0,0,0,0) 60%),
+          radial-gradient(900px 500px at 50% 90%, rgba(246,231,203,0.07), rgba(0,0,0,0) 55%),
+          var(--bg);
         color: var(--cream);
       }}
 
       .block-container {{
-        padding-top: 2.0rem;
-        padding-bottom: 2.5rem;
-        max-width: 860px;
+        padding-top: 1.6rem;
+        padding-bottom: 2.4rem;
+        max-width: 920px;
       }}
 
       h1, h2, h3, p, div, span, label {{
         color: var(--cream) !important;
       }}
 
+      /* Logo */
       .logo-wrap {{
         display: flex;
         justify-content: center;
         margin-bottom: 10px;
       }}
       .logo-wrap img {{
-        width: 120px;
-        height: 120px;
+        width: 132px;
+        height: 132px;
         object-fit: contain;
         border-radius: 999px;
-        border: 2px solid rgba(237,158,31,0.70);
-        box-shadow: 0 10px 30px rgba(0,0,0,0.35);
-        background: rgba(255,255,255,0.02);
+        border: 2px solid rgba(237,158,31,0.85);
+        box-shadow: 0 18px 40px rgba(0,0,0,0.45),
+                    0 0 0 6px rgba(237,158,31,0.08);
+        background: rgba(246,231,203,0.03);
         padding: 10px;
       }}
 
+      /* Hero */
       .hero {{
         text-align: center;
-        margin-bottom: 1.25rem;
+        margin-bottom: 1.2rem;
       }}
       .hero h1 {{
-        font-size: 2.0rem;
+        font-size: 2.05rem;
         margin: 0;
         line-height: 1.2;
+        color: var(--accent) !important;
+        text-shadow: 0 10px 25px rgba(0,0,0,0.55);
       }}
       .hero p {{
-        margin: 0.4rem 0 0;
+        margin: 0.45rem 0 0;
         opacity: 0.92;
+        color: var(--cream) !important;
       }}
 
+      /* Link cards */
       a.link-card {{
         display: flex;
         align-items: center;
         gap: 12px;
-        padding: 14px 16px;
-        margin: 10px 0;
-        border-radius: 16px;
+        padding: 15px 16px;
+        margin: 12px 0;
+        border-radius: 18px;
         text-decoration: none !important;
 
-        background: linear-gradient(
-          180deg,
-          rgba(255,255,255,0.04),
-          rgba(255,255,255,0.02)
+        background: linear-gradient(180deg,
+          rgba(246,231,203,0.07),
+          rgba(11,7,6,0.55)
         );
 
-        border: 1px solid rgba(246,231,203,0.12);
-        transition: transform 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
+        border: 1px solid rgba(237,158,31,0.30);
+        box-shadow: 0 14px 34px rgba(0,0,0,0.42);
+        transition: transform 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
       }}
+
       a.link-card:hover {{
-        transform: translateY(-1px);
-        border-color: rgba(237,158,31,0.55);
-        box-shadow: 0 12px 28px rgba(0,0,0,0.35);
+        transform: translateY(-2px);
+        border-color: rgba(237,158,31,0.70);
+        box-shadow: 0 18px 42px rgba(0,0,0,0.55),
+                    0 0 0 6px rgba(237,158,31,0.08);
       }}
 
       .link-icon {{
-        width: 40px;
-        height: 40px;
+        width: 42px;
+        height: 42px;
         display: grid;
         place-items: center;
         border-radius: 14px;
 
-        background: rgba(237,158,31,0.18);
-        border: 1px solid rgba(237,158,31,0.30);
+        background: rgba(237,158,31,0.26);
+        border: 1px solid rgba(237,158,31,0.62);
+        color: var(--cream);
         font-size: 18px;
       }}
 
       .link-text {{
-        font-size: 1.02rem;
-        font-weight: 650;
+        font-size: 1.03rem;
+        font-weight: 750;
         color: var(--cream) !important;
         flex: 1;
       }}
 
       .link-arrow {{
         color: var(--accent) !important;
-        font-weight: 800;
-        opacity: 0.95;
+        font-weight: 900;
+        opacity: 1;
       }}
 
+      /* Sidebar */
       section[data-testid="stSidebar"] {{
-        background: rgba(255,255,255,0.03);
-        border-right: 1px solid rgba(246,231,203,0.10);
+        background: rgba(246,231,203,0.03);
+        border-right: 1px solid rgba(237,158,31,0.18);
       }}
 
+      /* Tabs */
       div[data-testid="stTabs"] button {{
         color: var(--cream) !important;
+        opacity: 0.9;
       }}
       div[data-testid="stTabs"] button[aria-selected="true"] {{
-        border-bottom: 2px solid var(--accent) !important;
+        border-bottom: 3px solid var(--accent) !important;
+        opacity: 1;
       }}
 
       .small-note {{
         text-align: center;
-        opacity: 0.75;
+        opacity: 0.78;
         font-size: 0.9rem;
         margin-top: 1.25rem;
       }}
@@ -220,20 +293,35 @@ st.markdown(
 )
 
 # ----------------------------
-# Sidebar admin
+# Sidebar (Admin protegido)
 # ----------------------------
 with st.sidebar:
     st.header("⚙️ Configurações")
-    admin_mode = st.toggle("Modo Admin", value=False, help="Ative para editar links e abas")
-    st.caption("Deixe desativado para uso público.")
+    st.caption("Área pública: links. Área admin: protegida por senha.")
 
+admin_mode = admin_gate()
+
+if admin_mode:
+    with st.sidebar:
+        if st.button("Sair do Admin", use_container_width=True):
+            st.session_state["admin_ok"] = False
+            st.rerun()
 
 # ----------------------------
-# Top logo + hero
+# Logo + Hero
 # ----------------------------
-if os.path.exists("logo.png"):
-    b64 = read_logo_base64("logo.png")
-    st.markdown(f'<div class="logo-wrap"><img src="data:image/png;base64,{b64}"/></div>', unsafe_allow_html=True)
+logo_path = find_logo_path()
+if logo_path:
+    mime = "png" if logo_path.endswith(".png") else "jpeg"
+    b64 = read_file_base64(logo_path)
+    st.markdown(
+        f"""
+        <div class="logo-wrap">
+          <img src="data:image/{mime};base64,{b64}" alt="Logo Muniz" />
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 st.markdown(
     f"""
