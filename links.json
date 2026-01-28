@@ -16,17 +16,17 @@
         {
           "label": "Localização",
           "url": "https://www.google.com/maps/search/?api=1&query=R.%20%C3%81lvaro%20Adolfo%2C%201003%20-%20Prainha%2C%20Santar%C3%A9m%20-%20PA%2C%2068010-295",
-          "arquivo": "icons/localizacao.jpg"
+          "arquivo": "icons/localizacao.png"
         },
         {
           "label": "WhatsApp",
           "url": "https://wa.me/5593992317979",
-          "arquivo": "icons/whatsapp.jpg"
+          "arquivo": "icons/whatsapp.png"
         },
         {
           "label": "Instagram",
           "url": "https://www.instagram.com/distrimuniz/",
-          "arquivo": "icons/instagram.jpg"
+          "arquivo": "icons/instagram.png"
         },
         {
           "label": "iFood",
@@ -36,7 +36,7 @@
         {
           "label": "Zé Delivery",
           "url": "https://www.ze.delivery/",
-          "arquivo": "icons/zedelivery.webp"
+          "arquivo": "icons/zedelivery.png"
         }
       ]
     }
