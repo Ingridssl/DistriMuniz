@@ -72,10 +72,14 @@ def read_file_base64(path: str) -> str:
 def build_data_uri(path: str) -> str | None:
     if not path:
         return None
-    if not os.path.exists(path):
+    # aceita também "./icons/..."
+    p = path
+    if not os.path.exists(p) and os.path.exists("./" + p):
+        p = "./" + p
+    if not os.path.exists(p):
         return None
-    mime = guess_mime_from_path(path)
-    b64 = read_file_base64(path)
+    mime = guess_mime_from_path(p)
+    b64 = read_file_base64(p)
     return f"data:{mime};base64,{b64}"
 
 
@@ -127,6 +131,7 @@ def admin_login_ui() -> bool:
 def render_button(label: str, url: str, arquivo: str | None):
     label = (label or "").strip()
     url = (url or "").strip()
+    arquivo = (arquivo or "").strip()
 
     data_uri = build_data_uri(arquivo) if arquivo else None
     icon_html = "<span class='link-icon-fallback'>🔗</span>"
@@ -144,6 +149,10 @@ def render_button(label: str, url: str, arquivo: str | None):
         unsafe_allow_html=True,
     )
 
+    # Debug leve: avisa quando arquivo não existe
+    if arquivo and not (os.path.exists(arquivo) or os.path.exists("./" + arquivo)):
+        st.caption(f"⚠️ Ícone não encontrado: `{arquivo}`")
+
 
 # ----------------------------
 # Page config
@@ -159,9 +168,6 @@ title = site.get("title", "Muniz Distribuidora | Links")
 subtitle = site.get("subtitle", "Acesse nossos canais oficiais")
 
 
-# ----------------------------
-# Styles
-# ----------------------------
 st.markdown(
     f"""
     <style>
@@ -204,7 +210,6 @@ st.markdown(
         color: var(--cream) !important;
       }}
 
-      /* LOGO: círculo perfeito, sem laterais quadradas */
       .logo-wrap {{
         display: flex;
         justify-content: center;
@@ -214,7 +219,7 @@ st.markdown(
         width: 170px;
         height: 170px;
         border-radius: 999px;
-        overflow: hidden; /* isso corta qualquer “lateral” */
+        overflow: hidden;
         border: 2px solid rgba(237,158,31,0.65);
         background: rgba(11,7,6,0.55);
         box-shadow: 0 18px 44px rgba(0,0,0,0.45);
@@ -222,7 +227,7 @@ st.markdown(
       .logo-circle img {{
         width: 100%;
         height: 100%;
-        object-fit: cover; /* preenche o círculo */
+        object-fit: cover;
         display: block;
       }}
       @media (max-width: 640px) {{
@@ -308,39 +313,24 @@ st.markdown(
         border-bottom: 3px solid var(--accent) !important;
       }}
 
-      /* Footer/Admin no final */
       .footer-admin {{
         margin-top: 26px;
         padding-top: 18px;
         border-top: 1px solid rgba(237,158,31,0.22);
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 16px;
-      }}
-      .footer-note {{
-        opacity: 0.8;
-        font-size: 0.92rem;
       }}
     </style>
     """,
     unsafe_allow_html=True,
 )
 
-# ----------------------------
-# Sidebar (admin continua acessível pela lateral)
-# ----------------------------
 with st.sidebar:
     st.header("⚙️ Configurações")
-    st.caption("A lateral pode ser aberta pelo botão (>>) no topo.")
+    st.caption("A lateral abre pelo botão (>>) no topo.")
     if st.session_state.get("admin_ok"):
         if st.button("Sair do Admin", use_container_width=True):
             st.session_state["admin_ok"] = False
             st.rerun()
 
-# ----------------------------
-# Logo + Hero
-# ----------------------------
 logo_path = find_logo_path()
 if logo_path:
     logo_uri = build_data_uri(logo_path)
@@ -366,9 +356,6 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# ----------------------------
-# Tabs
-# ----------------------------
 if not tabs:
     tabs = [{"name": "Principais", "items": []}]
 
@@ -390,25 +377,21 @@ for idx, tab in enumerate(tabs):
                 else:
                     st.warning(f"URL inválida em: {label}")
 
-# ----------------------------
-# Footer + Botão Admin (NO FINAL)
-# ----------------------------
+# Footer/Admin no final
 st.markdown('<div class="footer-admin">', unsafe_allow_html=True)
 c1, c2 = st.columns([1, 2])
 with c1:
     if st.button("🔒 Área do Admin", use_container_width=True):
         st.session_state["show_admin"] = True
 with c2:
-    st.markdown('<div class="footer-note">Acesso protegido por senha.</div>', unsafe_allow_html=True)
+    st.caption("Acesso protegido por senha.")
 st.markdown("</div>", unsafe_allow_html=True)
 
-# Login Admin (aparece no final)
 if st.session_state.get("show_admin") and not st.session_state.get("admin_ok"):
     st.subheader("🔒 Login Admin")
     admin_login_ui()
     st.divider()
 
-# Painel Admin (se logado)
 if st.session_state.get("admin_ok"):
     st.subheader("🛠️ Painel Admin")
 
@@ -424,7 +407,6 @@ if st.session_state.get("admin_ok"):
     current_tab = tabs[tab_index]
 
     current_tab["name"] = st.text_input("Nome da aba", value=current_tab.get("name", tab_to_edit)).strip() or "Aba"
-    st.caption("Em 'arquivo', use: icons/instagram.jpg")
 
     edited = st.data_editor(
         current_tab.get("items", []),
@@ -433,20 +415,14 @@ if st.session_state.get("admin_ok"):
         column_config={
             "label": st.column_config.TextColumn("Título", required=True),
             "url": st.column_config.TextColumn("URL", required=True),
-            "arquivo": st.column_config.TextColumn("Arquivo imagem (ex: icons/whatsapp.jpg)", required=False),
+            "arquivo": st.column_config.TextColumn("Arquivo imagem (ex: icons/instagram.png)", required=False),
         },
         hide_index=True,
     )
     current_tab["items"] = edited
 
-    cc1, cc2 = st.columns([1, 1])
-    with cc1:
-        if st.button("💾 Salvar alterações", use_container_width=True):
-            data["tabs"] = tabs
-            save_data(data)
-            st.success("Salvo em links.json!")
-            st.rerun()
-    with cc2:
-        if st.button("Ocultar Admin", use_container_width=True):
-            st.session_state["show_admin"] = False
-            st.rerun()
+    if st.button("💾 Salvar alterações", use_container_width=True):
+        data["tabs"] = tabs
+        save_data(data)
+        st.success("Salvo em links.json!")
+        st.rerun()
