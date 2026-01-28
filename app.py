@@ -21,11 +21,7 @@ PALETTE = {
 def load_data() -> dict:
     if not os.path.exists(DATA_FILE):
         return {
-            "site": {
-                "title": "Muniz Distribuidora | Links",
-                "subtitle": "Acesse nossos canais oficiais",
-                "columns": 2
-            },
+            "site": {"title": "Muniz Distribuidora | Links", "subtitle": "Acesse nossos canais oficiais", "columns": 2},
             "tabs": [{"name": "Principais", "items": []}],
         }
     with open(DATA_FILE, "r", encoding="utf-8") as f:
@@ -130,16 +126,16 @@ def admin_gate() -> bool:
 # ----------------------------
 # UI
 # ----------------------------
-def render_button(label: str, url: str, icon_text: str | None, icon_image_path: str | None):
+def render_button(label: str, url: str, icon_image_path: str | None):
     label = (label or "").strip()
     url = (url or "").strip()
-    icon_text = (icon_text or "🔗").strip()
 
     data_uri = build_data_uri(icon_image_path) if icon_image_path else None
+
+    # se não achar imagem, mostra um fallback simples
+    icon_html = f"<span class='link-icon-fallback'>🔗</span>"
     if data_uri:
         icon_html = f'<img class="link-icon-img" src="{data_uri}" alt="{label}"/>'
-    else:
-        icon_html = f"<span class='link-icon-emoji'>{icon_text}</span>"
 
     st.markdown(
         f"""
@@ -180,7 +176,6 @@ st.markdown(
         --cream: {PALETTE["cream"]};
       }}
 
-      /* Fundo com degradê + glows */
       .stApp {{
         background:
           radial-gradient(900px 450px at 50% 10%, rgba(237,158,31,0.35), rgba(0,0,0,0) 65%),
@@ -241,7 +236,7 @@ st.markdown(
         color: var(--cream) !important;
       }}
 
-      /* Cards com mais cor */
+      /* Cards */
       a.link-card {{
         display: flex;
         align-items: center;
@@ -257,41 +252,39 @@ st.markdown(
           rgba(11,7,6,0.62)
         );
 
-        border: 1px solid rgba(237,158,31,0.38);
+        border: 1px solid rgba(237,158,31,0.40);
         box-shadow: 0 14px 34px rgba(0,0,0,0.45);
         transition: transform 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
       }}
 
       a.link-card:hover {{
         transform: translateY(-2px);
-        border-color: rgba(237,158,31,0.85);
+        border-color: rgba(237,158,31,0.90);
         box-shadow: 0 18px 46px rgba(0,0,0,0.60),
                     0 0 0 7px rgba(237,158,31,0.10);
       }}
 
       .link-icon {{
-        width: 44px;
-        height: 44px;
+        width: 48px;
+        height: 48px;
         display: grid;
         place-items: center;
-        border-radius: 15px;
+        border-radius: 16px;
 
-        background: rgba(237,158,31,0.30);
-        border: 1px solid rgba(237,158,31,0.78);
+        background: rgba(237,158,31,0.28);
+        border: 1px solid rgba(237,158,31,0.80);
         overflow: hidden;
       }}
 
-      .link-icon-emoji {{
-        font-size: 18px;
-        line-height: 1;
+      .link-icon-img {{
+        width: 100%;
+        height: 100%;
+        object-fit: cover; /* imagem como "foto" no quadradinho */
+        display: block;
       }}
 
-      .link-icon-img {{
-        width: 28px;
-        height: 28px;
-        object-fit: contain;
-        display: block;
-        filter: drop-shadow(0 2px 7px rgba(0,0,0,0.45));
+      .link-icon-fallback {{
+        font-size: 18px;
       }}
 
       .link-text {{
@@ -395,12 +388,11 @@ for idx, tab in enumerate(tabs):
         for i, item in enumerate(items):
             label = item.get("label", "Link")
             url = item.get("url", "")
-            icon_text = item.get("icon", "🔗")
             icon_image = item.get("icon_image")
 
             with cols[i % columns]:
                 if is_valid_url(url):
-                    render_button(label, url, icon_text, icon_image)
+                    render_button(label, url, icon_image)
                 else:
                     st.warning(f"URL inválida em: {label}")
 
@@ -426,7 +418,7 @@ if admin_mode:
 
     with col_a:
         current_tab["name"] = st.text_input("Nome da aba", value=current_tab.get("name", tab_to_edit)).strip() or "Aba"
-        st.caption("Para ícone por imagem: preencha icon_image com o nome do arquivo (ex: zedelivery.webp).")
+        st.caption("Preencha icon_image com o caminho do arquivo (ex: icones/whatsapp.jpg).")
 
         edited = st.data_editor(
             current_tab.get("items", []),
@@ -435,8 +427,7 @@ if admin_mode:
             column_config={
                 "label": st.column_config.TextColumn("Título do botão", required=True),
                 "url": st.column_config.TextColumn("URL (https://...)", required=True),
-                "icon": st.column_config.TextColumn("Emoji (opcional)", required=False),
-                "icon_image": st.column_config.TextColumn("Ícone (arquivo) ex: zedelivery.webp", required=False),
+                "icon_image": st.column_config.TextColumn("Ícone (arquivo) ex: icones/whatsapp.jpg", required=False),
             },
             hide_index=True,
         )
