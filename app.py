@@ -164,8 +164,9 @@ columns = int(site.get("columns", 2))
 title = site.get("title", "Muniz Distribuidora | Links")
 subtitle = site.get("subtitle", "Acesse nossos canais oficiais")
 
+
 # ----------------------------
-# Styles (logo inteira + badge preta nos ícones + degradê)
+# Styles (push down + logo sem branco + degradê)
 # ----------------------------
 st.markdown(
     f"""
@@ -175,6 +176,28 @@ st.markdown(
         --bg: {PALETTE["bg"]};
         --brown: {PALETTE["brown"]};
         --cream: {PALETTE["cream"]};
+      }}
+
+      /* Remove/neutraliza header interno do Streamlit (o do app) */
+      header[data-testid="stHeader"] {{
+        background: transparent !important;
+        height: 0px !important;
+      }}
+      div[data-testid="stToolbar"] {{
+        visibility: hidden !important;
+        height: 0px !important;
+      }}
+
+      /* Empurra conteúdo para não ficar sob a barra superior (Cloud/Whats) */
+      .block-container {{
+        padding-top: 4.2rem !important;
+        padding-bottom: 2.2rem;
+        max-width: 920px;
+      }}
+      @media (max-width: 640px) {{
+        .block-container {{
+          padding-top: 5.4rem !important;
+        }}
       }}
 
       .stApp {{
@@ -190,32 +213,31 @@ st.markdown(
         color: var(--cream);
       }}
 
-      .block-container {{
-        padding-top: 1.2rem;
-        padding-bottom: 2.2rem;
-        max-width: 920px;
-      }}
-
       h1, h2, h3, p, div, span, label {{
         color: var(--cream) !important;
       }}
 
-      /* -------- LOGO: sem corte, sem borda, fundo preto -------- */
+      /* LOGO: fundo preto atrás + remove “branco” por blend-mode */
       .logo-wrap {{
         display: flex;
         justify-content: center;
-        margin-bottom: 12px;
+        margin: 0 0 12px 0;
       }}
-      .logo-wrap img {{
-        width: min(200px, 60vw);
+      .logo-badge {{
+        background: rgba(11,7,6,1);
+        border-radius: 16px;
+        padding: 10px 14px;
+        border: 1px solid rgba(237,158,31,0.45);
+        box-shadow: 0 18px 44px rgba(0,0,0,0.55);
+      }}
+      .logo-badge img {{
+        width: min(230px, 62vw);
         height: auto;
         object-fit: contain;
-        border-radius: 0 !important;   /* sem círculo */
-        border: none !important;       /* sem borda */
-        background: transparent !important;
-        padding: 0 !important;
-        box-shadow: none !important;   /* sem halo */
         display: block;
+
+        /* truque que faz branco virar “transparente” em fundo escuro */
+        mix-blend-mode: multiply;
       }}
 
       /* Hero */
@@ -224,10 +246,10 @@ st.markdown(
         margin-bottom: 1.15rem;
       }}
       .hero h1 {{
-        font-size: 2.08rem;
+        font-size: 2.05rem;
         margin: 0;
         line-height: 1.2;
-        color: var(--cream) !important; /* no mobile fica mais legível */
+        color: var(--cream) !important;
         text-shadow: 0 10px 25px rgba(0,0,0,0.55);
       }}
       .hero p {{
@@ -264,7 +286,7 @@ st.markdown(
                     0 0 0 7px rgba(237,158,31,0.10);
       }}
 
-      /* -------- ÍCONE: badge totalmente PRETA -------- */
+      /* Ícone: badge preta */
       .link-icon {{
         width: 52px;
         height: 52px;
@@ -272,20 +294,16 @@ st.markdown(
         place-items: center;
         border-radius: 16px;
 
-        background: rgba(11,7,6,1) !important; /* PRETO */
+        background: rgba(11,7,6,1) !important;
         border: 1px solid rgba(237,158,31,0.85);
         overflow: hidden;
       }}
-
-      /* Mostra a imagem sem cortar (logo completa dentro do badge) */
       .link-icon-img {{
-        width: 80%;
-        height: 80%;
-        object-fit: contain; /* não corta */
+        width: 82%;
+        height: 82%;
+        object-fit: contain;
         display: block;
-        background: transparent;
       }}
-
       .link-icon-fallback {{
         font-size: 18px;
       }}
@@ -296,7 +314,6 @@ st.markdown(
         color: var(--cream) !important;
         flex: 1;
       }}
-
       .link-arrow {{
         color: var(--accent) !important;
         font-weight: 900;
@@ -348,7 +365,9 @@ if logo_path:
         st.markdown(
             f"""
             <div class="logo-wrap">
-              <img src="{logo_uri}" alt="Logo Muniz" />
+              <div class="logo-badge">
+                <img src="{logo_uri}" alt="Logo Muniz" />
+              </div>
             </div>
             """,
             unsafe_allow_html=True,
@@ -380,7 +399,7 @@ for idx, tab in enumerate(tabs):
         for i, item in enumerate(items):
             label = item.get("label", "Link")
             url = item.get("url", "")
-            arquivo = item.get("arquivo")  # <- campo do ícone imagem
+            arquivo = item.get("arquivo")
 
             with cols[i % columns]:
                 if is_valid_url(url):
@@ -410,7 +429,7 @@ if admin_mode:
 
     with col_a:
         current_tab["name"] = st.text_input("Nome da aba", value=current_tab.get("name", tab_to_edit)).strip() or "Aba"
-        st.caption("Em 'arquivo', use o caminho tipo: icons/instagram.jpg")
+        st.caption("Em 'arquivo', use: icons/instagram.jpg")
 
         edited = st.data_editor(
             current_tab.get("items", []),
