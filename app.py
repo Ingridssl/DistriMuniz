@@ -87,18 +87,15 @@ def build_data_uri(path: str) -> str | None:
 # Admin (senha)
 # ----------------------------
 def get_admin_password() -> str:
-    # Streamlit Cloud: Secrets
     try:
         if "ADMIN_PASSWORD" in st.secrets:
             return str(st.secrets["ADMIN_PASSWORD"])
     except Exception:
         pass
-    # Local: variável de ambiente
     return os.getenv("ADMIN_PASSWORD", "")
 
 
 def admin_gate() -> bool:
-    """True se o admin está autenticado nesta sessão."""
     if st.session_state.get("admin_ok"):
         return True
 
@@ -137,7 +134,6 @@ def render_button(label: str, url: str, arquivo: str | None):
     label = (label or "").strip()
     url = (url or "").strip()
 
-    # Se existir imagem, mostra. Se não, fallback.
     data_uri = build_data_uri(arquivo) if arquivo else None
     icon_html = "<span class='link-icon-fallback'>🔗</span>"
     if data_uri:
@@ -169,7 +165,7 @@ title = site.get("title", "Muniz Distribuidora | Links")
 subtitle = site.get("subtitle", "Acesse nossos canais oficiais")
 
 # ----------------------------
-# Styles (DEGRADÊ forte dourado -> marrom -> preto)
+# Styles (logo inteira + badge preta nos ícones + degradê)
 # ----------------------------
 st.markdown(
     f"""
@@ -185,7 +181,6 @@ st.markdown(
         background:
           radial-gradient(1000px 520px at 50% 8%, rgba(237,158,31,0.45), rgba(0,0,0,0) 62%),
           radial-gradient(900px 500px at 18% 70%, rgba(135,58,28,0.30), rgba(0,0,0,0) 62%),
-          radial-gradient(900px 500px at 82% 70%, rgba(246,231,203,0.10), rgba(0,0,0,0) 60%),
           linear-gradient(180deg,
             rgba(237,158,31,0.28) 0%,
             rgba(135,58,28,0.38) 34%,
@@ -196,7 +191,7 @@ st.markdown(
       }}
 
       .block-container {{
-        padding-top: 1.4rem;
+        padding-top: 1.2rem;
         padding-bottom: 2.2rem;
         max-width: 920px;
       }}
@@ -205,22 +200,22 @@ st.markdown(
         color: var(--cream) !important;
       }}
 
-      /* Logo */
+      /* -------- LOGO: sem corte, sem borda, fundo preto -------- */
       .logo-wrap {{
         display: flex;
         justify-content: center;
-        margin-bottom: 10px;
+        margin-bottom: 12px;
       }}
       .logo-wrap img {{
-        width: 132px;
-        height: 132px;
+        width: min(200px, 60vw);
+        height: auto;
         object-fit: contain;
-        border-radius: 999px;
-        border: 2px solid rgba(237,158,31,0.95);
-        box-shadow: 0 22px 50px rgba(0,0,0,0.55),
-                    0 0 0 7px rgba(237,158,31,0.10);
-        background: rgba(246,231,203,0.04);
-        padding: 10px;
+        border-radius: 0 !important;   /* sem círculo */
+        border: none !important;       /* sem borda */
+        background: transparent !important;
+        padding: 0 !important;
+        box-shadow: none !important;   /* sem halo */
+        display: block;
       }}
 
       /* Hero */
@@ -232,12 +227,12 @@ st.markdown(
         font-size: 2.08rem;
         margin: 0;
         line-height: 1.2;
-        color: var(--accent) !important;
+        color: var(--cream) !important; /* no mobile fica mais legível */
         text-shadow: 0 10px 25px rgba(0,0,0,0.55);
       }}
       .hero p {{
         margin: 0.45rem 0 0;
-        opacity: 0.94;
+        opacity: 0.95;
         color: var(--cream) !important;
       }}
 
@@ -269,24 +264,26 @@ st.markdown(
                     0 0 0 7px rgba(237,158,31,0.10);
       }}
 
+      /* -------- ÍCONE: badge totalmente PRETA -------- */
       .link-icon {{
-        width: 48px;
-        height: 48px;
+        width: 52px;
+        height: 52px;
         display: grid;
         place-items: center;
         border-radius: 16px;
 
-        background: rgba(237,158,31,0.30);
+        background: rgba(11,7,6,1) !important; /* PRETO */
         border: 1px solid rgba(237,158,31,0.85);
         overflow: hidden;
       }}
 
-      /* aqui é o que faz virar “imagem” no lugar do ícone */
+      /* Mostra a imagem sem cortar (logo completa dentro do badge) */
       .link-icon-img {{
-        width: 100%;
-        height: 100%;
-        object-fit: cover; /* preenche o quadradinho */
+        width: 80%;
+        height: 80%;
+        object-fit: contain; /* não corta */
         display: block;
+        background: transparent;
       }}
 
       .link-icon-fallback {{
@@ -308,11 +305,7 @@ st.markdown(
 
       /* Sidebar */
       section[data-testid="stSidebar"] {{
-        background: linear-gradient(180deg,
-          rgba(246,231,203,0.05),
-          rgba(135,58,28,0.12),
-          rgba(11,7,6,0.80)
-        );
+        background: rgba(11,7,6,0.92);
         border-right: 1px solid rgba(237,158,31,0.22);
       }}
 
@@ -324,13 +317,6 @@ st.markdown(
       div[data-testid="stTabs"] button[aria-selected="true"] {{
         border-bottom: 3px solid var(--accent) !important;
         opacity: 1;
-      }}
-
-      .small-note {{
-        text-align: center;
-        opacity: 0.82;
-        font-size: 0.9rem;
-        margin-top: 1.2rem;
       }}
     </style>
     """,
@@ -394,7 +380,7 @@ for idx, tab in enumerate(tabs):
         for i, item in enumerate(items):
             label = item.get("label", "Link")
             url = item.get("url", "")
-            arquivo = item.get("arquivo")  # <- AQUI: campo que você pediu
+            arquivo = item.get("arquivo")  # <- campo do ícone imagem
 
             with cols[i % columns]:
                 if is_valid_url(url):
@@ -424,7 +410,7 @@ if admin_mode:
 
     with col_a:
         current_tab["name"] = st.text_input("Nome da aba", value=current_tab.get("name", tab_to_edit)).strip() or "Aba"
-        st.caption("Coloque o caminho em 'arquivo' ex: icons/whatsapp.jpg")
+        st.caption("Em 'arquivo', use o caminho tipo: icons/instagram.jpg")
 
         edited = st.data_editor(
             current_tab.get("items", []),
@@ -433,7 +419,7 @@ if admin_mode:
             column_config={
                 "label": st.column_config.TextColumn("Título", required=True),
                 "url": st.column_config.TextColumn("URL", required=True),
-                "arquivo": st.column_config.TextColumn("Arquivo da imagem (ex: icons/whatsapp.jpg)", required=False),
+                "arquivo": st.column_config.TextColumn("Arquivo imagem (ex: icons/whatsapp.jpg)", required=False),
             },
             hide_index=True,
         )
@@ -443,7 +429,7 @@ if admin_mode:
         st.markdown("#### Ações")
         if st.button("➕ Criar nova aba"):
             tabs.append({"name": "Nova Aba", "items": []})
-            st.success("Nova aba criada!")
+            st.success("Aba criada!")
             st.rerun()
 
         if len(tabs) > 1 and st.button("🗑️ Excluir esta aba"):
@@ -472,5 +458,3 @@ if admin_mode:
                 save_data(data)
                 st.success("Salvo em links.json!")
                 st.rerun()
-
-st.markdown('<div class="small-note">🔗 Muniz Distribuidora — Página de links</div>', unsafe_allow_html=True)
