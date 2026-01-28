@@ -26,11 +26,8 @@ def load_data() -> dict:
                 "subtitle": "Acesse nossos canais oficiais",
                 "columns": 2
             },
-            "tabs": [
-                {"name": "Principais", "items": []}
-            ],
+            "tabs": [{"name": "Principais", "items": []}],
         }
-
     with open(DATA_FILE, "r", encoding="utf-8") as f:
         return json.load(f)
 
@@ -49,14 +46,26 @@ def is_valid_url(url: str) -> bool:
 
 
 # ----------------------------
-# Logo helpers
+# File helpers (logo + icons)
 # ----------------------------
 def find_logo_path() -> str | None:
-    # Seu GitHub está com logo.jpeg, então precisa considerar isso
     for name in ["logo.png", "logo.jpg", "logo.jpeg"]:
         if os.path.exists(name):
             return name
     return None
+
+
+def guess_mime_from_path(path: str) -> str:
+    p = path.lower()
+    if p.endswith(".png"):
+        return "image/png"
+    if p.endswith(".jpg") or p.endswith(".jpeg"):
+        return "image/jpeg"
+    if p.endswith(".webp"):
+        return "image/webp"
+    if p.endswith(".svg"):
+        return "image/svg+xml"
+    return "application/octet-stream"
 
 
 def read_file_base64(path: str) -> str:
@@ -64,22 +73,29 @@ def read_file_base64(path: str) -> str:
         return base64.b64encode(f.read()).decode("utf-8")
 
 
+def build_data_uri(path: str) -> str | None:
+    if not path:
+        return None
+    if not os.path.exists(path):
+        return None
+    mime = guess_mime_from_path(path)
+    b64 = read_file_base64(path)
+    return f"data:{mime};base64,{b64}"
+
+
 # ----------------------------
 # Admin auth
 # ----------------------------
 def get_admin_password() -> str:
-    # 1) Streamlit Secrets (Cloud)
     try:
         if "ADMIN_PASSWORD" in st.secrets:
             return str(st.secrets["ADMIN_PASSWORD"])
     except Exception:
         pass
-    # 2) Variável de ambiente (local)
     return os.getenv("ADMIN_PASSWORD", "")
 
 
 def admin_gate() -> bool:
-    """Retorna True se o admin foi autenticado nesta sessão."""
     if st.session_state.get("admin_ok"):
         return True
 
@@ -112,17 +128,23 @@ def admin_gate() -> bool:
 
 
 # ----------------------------
-# UI helpers
+# UI
 # ----------------------------
-def render_button(label: str, url: str, icon: str):
+def render_button(label: str, url: str, icon_text: str | None, icon_image_path: str | None):
     label = (label or "").strip()
     url = (url or "").strip()
-    icon = (icon or "🔗").strip()
+    icon_text = (icon_text or "🔗").strip()
+
+    data_uri = build_data_uri(icon_image_path) if icon_image_path else None
+    if data_uri:
+        icon_html = f'<img class="link-icon-img" src="{data_uri}" alt="{label}"/>'
+    else:
+        icon_html = f"<span class='link-icon-emoji'>{icon_text}</span>"
 
     st.markdown(
         f"""
         <a class="link-card" href="{url}" target="_blank" rel="noopener noreferrer">
-            <span class="link-icon">{icon}</span>
+            <span class="link-icon">{icon_html}</span>
             <span class="link-text">{label}</span>
             <span class="link-arrow">↗</span>
         </a>
@@ -146,7 +168,7 @@ subtitle = site.get("subtitle", "Acesse nossos canais oficiais")
 
 
 # ----------------------------
-# Styles (mais dourado e creme)
+# Styles (DEGRADÊ dourado -> marrom -> preto)
 # ----------------------------
 st.markdown(
     f"""
@@ -158,11 +180,18 @@ st.markdown(
         --cream: {PALETTE["cream"]};
       }}
 
+      /* Fundo com degradê + glows */
       .stApp {{
         background:
-          radial-gradient(900px 450px at 50% 8%, rgba(237,158,31,0.22), rgba(0,0,0,0) 60%),
-          radial-gradient(900px 500px at 50% 90%, rgba(246,231,203,0.07), rgba(0,0,0,0) 55%),
-          var(--bg);
+          radial-gradient(900px 450px at 50% 10%, rgba(237,158,31,0.35), rgba(0,0,0,0) 65%),
+          radial-gradient(900px 500px at 20% 80%, rgba(135,58,28,0.22), rgba(0,0,0,0) 65%),
+          radial-gradient(900px 500px at 80% 80%, rgba(246,231,203,0.08), rgba(0,0,0,0) 60%),
+          linear-gradient(180deg,
+            rgba(237,158,31,0.18) 0%,
+            rgba(135,58,28,0.28) 35%,
+            rgba(11,7,6,1) 78%,
+            rgba(11,7,6,1) 100%
+          );
         color: var(--cream);
       }}
 
@@ -187,10 +216,10 @@ st.markdown(
         height: 132px;
         object-fit: contain;
         border-radius: 999px;
-        border: 2px solid rgba(237,158,31,0.85);
-        box-shadow: 0 18px 40px rgba(0,0,0,0.45),
-                    0 0 0 6px rgba(237,158,31,0.08);
-        background: rgba(246,231,203,0.03);
+        border: 2px solid rgba(237,158,31,0.95);
+        box-shadow: 0 22px 50px rgba(0,0,0,0.55),
+                    0 0 0 7px rgba(237,158,31,0.10);
+        background: rgba(246,231,203,0.04);
         padding: 10px;
       }}
 
@@ -200,7 +229,7 @@ st.markdown(
         margin-bottom: 1.2rem;
       }}
       .hero h1 {{
-        font-size: 2.05rem;
+        font-size: 2.08rem;
         margin: 0;
         line-height: 1.2;
         color: var(--accent) !important;
@@ -208,53 +237,66 @@ st.markdown(
       }}
       .hero p {{
         margin: 0.45rem 0 0;
-        opacity: 0.92;
+        opacity: 0.94;
         color: var(--cream) !important;
       }}
 
-      /* Link cards */
+      /* Cards com mais cor */
       a.link-card {{
         display: flex;
         align-items: center;
         gap: 12px;
-        padding: 15px 16px;
+        padding: 16px 16px;
         margin: 12px 0;
         border-radius: 18px;
         text-decoration: none !important;
 
         background: linear-gradient(180deg,
-          rgba(246,231,203,0.07),
-          rgba(11,7,6,0.55)
+          rgba(246,231,203,0.09),
+          rgba(135,58,28,0.20),
+          rgba(11,7,6,0.62)
         );
 
-        border: 1px solid rgba(237,158,31,0.30);
-        box-shadow: 0 14px 34px rgba(0,0,0,0.42);
+        border: 1px solid rgba(237,158,31,0.38);
+        box-shadow: 0 14px 34px rgba(0,0,0,0.45);
         transition: transform 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
       }}
 
       a.link-card:hover {{
         transform: translateY(-2px);
-        border-color: rgba(237,158,31,0.70);
-        box-shadow: 0 18px 42px rgba(0,0,0,0.55),
-                    0 0 0 6px rgba(237,158,31,0.08);
+        border-color: rgba(237,158,31,0.85);
+        box-shadow: 0 18px 46px rgba(0,0,0,0.60),
+                    0 0 0 7px rgba(237,158,31,0.10);
       }}
 
       .link-icon {{
-        width: 42px;
-        height: 42px;
+        width: 44px;
+        height: 44px;
         display: grid;
         place-items: center;
-        border-radius: 14px;
+        border-radius: 15px;
 
-        background: rgba(237,158,31,0.26);
-        border: 1px solid rgba(237,158,31,0.62);
-        color: var(--cream);
+        background: rgba(237,158,31,0.30);
+        border: 1px solid rgba(237,158,31,0.78);
+        overflow: hidden;
+      }}
+
+      .link-icon-emoji {{
         font-size: 18px;
+        line-height: 1;
+      }}
+
+      .link-icon-img {{
+        width: 28px;
+        height: 28px;
+        object-fit: contain;
+        display: block;
+        filter: drop-shadow(0 2px 7px rgba(0,0,0,0.45));
       }}
 
       .link-text {{
-        font-size: 1.03rem;
-        font-weight: 750;
+        font-size: 1.04rem;
+        font-weight: 780;
         color: var(--cream) !important;
         flex: 1;
       }}
@@ -267,8 +309,12 @@ st.markdown(
 
       /* Sidebar */
       section[data-testid="stSidebar"] {{
-        background: rgba(246,231,203,0.03);
-        border-right: 1px solid rgba(237,158,31,0.18);
+        background: linear-gradient(180deg,
+          rgba(246,231,203,0.05),
+          rgba(135,58,28,0.10),
+          rgba(11,7,6,0.80)
+        );
+        border-right: 1px solid rgba(237,158,31,0.22);
       }}
 
       /* Tabs */
@@ -283,7 +329,7 @@ st.markdown(
 
       .small-note {{
         text-align: center;
-        opacity: 0.78;
+        opacity: 0.82;
         font-size: 0.9rem;
         margin-top: 1.25rem;
       }}
@@ -293,7 +339,7 @@ st.markdown(
 )
 
 # ----------------------------
-# Sidebar (Admin protegido)
+# Sidebar (Admin)
 # ----------------------------
 with st.sidebar:
     st.header("⚙️ Configurações")
@@ -312,16 +358,16 @@ if admin_mode:
 # ----------------------------
 logo_path = find_logo_path()
 if logo_path:
-    mime = "png" if logo_path.endswith(".png") else "jpeg"
-    b64 = read_file_base64(logo_path)
-    st.markdown(
-        f"""
-        <div class="logo-wrap">
-          <img src="data:image/{mime};base64,{b64}" alt="Logo Muniz" />
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    data_uri = build_data_uri(logo_path)
+    if data_uri:
+        st.markdown(
+            f"""
+            <div class="logo-wrap">
+              <img src="{data_uri}" alt="Logo Muniz" />
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
 st.markdown(
     f"""
@@ -349,10 +395,12 @@ for idx, tab in enumerate(tabs):
         for i, item in enumerate(items):
             label = item.get("label", "Link")
             url = item.get("url", "")
-            icon = item.get("icon", "🔗")
+            icon_text = item.get("icon", "🔗")
+            icon_image = item.get("icon_image")
+
             with cols[i % columns]:
                 if is_valid_url(url):
-                    render_button(label, url, icon)
+                    render_button(label, url, icon_text, icon_image)
                 else:
                     st.warning(f"URL inválida em: {label}")
 
@@ -378,6 +426,7 @@ if admin_mode:
 
     with col_a:
         current_tab["name"] = st.text_input("Nome da aba", value=current_tab.get("name", tab_to_edit)).strip() or "Aba"
+        st.caption("Para ícone por imagem: preencha icon_image com o nome do arquivo (ex: zedelivery.webp).")
 
         edited = st.data_editor(
             current_tab.get("items", []),
@@ -386,7 +435,8 @@ if admin_mode:
             column_config={
                 "label": st.column_config.TextColumn("Título do botão", required=True),
                 "url": st.column_config.TextColumn("URL (https://...)", required=True),
-                "icon": st.column_config.TextColumn("Ícone (emoji)", required=False),
+                "icon": st.column_config.TextColumn("Emoji (opcional)", required=False),
+                "icon_image": st.column_config.TextColumn("Ícone (arquivo) ex: zedelivery.webp", required=False),
             },
             hide_index=True,
         )
@@ -414,6 +464,9 @@ if admin_mode:
                     u = (it.get("url") or "").strip()
                     if u and not is_valid_url(u):
                         errors.append(f"URL inválida: {it.get('label','(sem título)')} → {u}")
+                    img = (it.get("icon_image") or "").strip()
+                    if img and not os.path.exists(img):
+                        errors.append(f"Ícone (arquivo) não encontrado: {it.get('label','(sem título)')} → {img}")
 
             if errors:
                 st.error("Corrija antes de salvar:\n- " + "\n- ".join(errors))
