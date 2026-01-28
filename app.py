@@ -21,7 +21,11 @@ PALETTE = {
 def load_data() -> dict:
     if not os.path.exists(DATA_FILE):
         return {
-            "site": {"title": "Muniz Distribuidora | Links", "subtitle": "Acesse nossos canais oficiais", "columns": 2},
+            "site": {
+                "title": "Muniz Distribuidora | Links",
+                "subtitle": "Acesse nossos canais oficiais",
+                "columns": 2,
+            },
             "tabs": [{"name": "Principais", "items": []}],
         }
     with open(DATA_FILE, "r", encoding="utf-8") as f:
@@ -42,7 +46,7 @@ def is_valid_url(url: str) -> bool:
 
 
 # ----------------------------
-# File helpers (logo + icons)
+# Files (logo + imagens dos botões)
 # ----------------------------
 def find_logo_path() -> str | None:
     for name in ["logo.png", "logo.jpg", "logo.jpeg"]:
@@ -80,18 +84,21 @@ def build_data_uri(path: str) -> str | None:
 
 
 # ----------------------------
-# Admin auth
+# Admin (senha)
 # ----------------------------
 def get_admin_password() -> str:
+    # Streamlit Cloud: Secrets
     try:
         if "ADMIN_PASSWORD" in st.secrets:
             return str(st.secrets["ADMIN_PASSWORD"])
     except Exception:
         pass
+    # Local: variável de ambiente
     return os.getenv("ADMIN_PASSWORD", "")
 
 
 def admin_gate() -> bool:
+    """True se o admin está autenticado nesta sessão."""
     if st.session_state.get("admin_ok"):
         return True
 
@@ -103,10 +110,10 @@ def admin_gate() -> bool:
     st.sidebar.subheader("🔒 Acesso Admin")
     typed = st.sidebar.text_input("Senha", type="password", placeholder="Digite a senha do admin")
 
-    col1, col2 = st.sidebar.columns([1, 1])
-    with col1:
+    c1, c2 = st.sidebar.columns([1, 1])
+    with c1:
         entrar = st.button("Entrar", use_container_width=True)
-    with col2:
+    with c2:
         limpar = st.button("Limpar", use_container_width=True)
 
     if limpar:
@@ -126,14 +133,13 @@ def admin_gate() -> bool:
 # ----------------------------
 # UI
 # ----------------------------
-def render_button(label: str, url: str, icon_image_path: str | None):
+def render_button(label: str, url: str, arquivo: str | None):
     label = (label or "").strip()
     url = (url or "").strip()
 
-    data_uri = build_data_uri(icon_image_path) if icon_image_path else None
-
-    # se não achar imagem, mostra um fallback simples
-    icon_html = f"<span class='link-icon-fallback'>🔗</span>"
+    # Se existir imagem, mostra. Se não, fallback.
+    data_uri = build_data_uri(arquivo) if arquivo else None
+    icon_html = "<span class='link-icon-fallback'>🔗</span>"
     if data_uri:
         icon_html = f'<img class="link-icon-img" src="{data_uri}" alt="{label}"/>'
 
@@ -162,9 +168,8 @@ columns = int(site.get("columns", 2))
 title = site.get("title", "Muniz Distribuidora | Links")
 subtitle = site.get("subtitle", "Acesse nossos canais oficiais")
 
-
 # ----------------------------
-# Styles (DEGRADÊ dourado -> marrom -> preto)
+# Styles (DEGRADÊ forte dourado -> marrom -> preto)
 # ----------------------------
 st.markdown(
     f"""
@@ -178,21 +183,21 @@ st.markdown(
 
       .stApp {{
         background:
-          radial-gradient(900px 450px at 50% 10%, rgba(237,158,31,0.35), rgba(0,0,0,0) 65%),
-          radial-gradient(900px 500px at 20% 80%, rgba(135,58,28,0.22), rgba(0,0,0,0) 65%),
-          radial-gradient(900px 500px at 80% 80%, rgba(246,231,203,0.08), rgba(0,0,0,0) 60%),
+          radial-gradient(1000px 520px at 50% 8%, rgba(237,158,31,0.45), rgba(0,0,0,0) 62%),
+          radial-gradient(900px 500px at 18% 70%, rgba(135,58,28,0.30), rgba(0,0,0,0) 62%),
+          radial-gradient(900px 500px at 82% 70%, rgba(246,231,203,0.10), rgba(0,0,0,0) 60%),
           linear-gradient(180deg,
-            rgba(237,158,31,0.18) 0%,
-            rgba(135,58,28,0.28) 35%,
-            rgba(11,7,6,1) 78%,
+            rgba(237,158,31,0.28) 0%,
+            rgba(135,58,28,0.38) 34%,
+            rgba(11,7,6,1) 80%,
             rgba(11,7,6,1) 100%
           );
         color: var(--cream);
       }}
 
       .block-container {{
-        padding-top: 1.6rem;
-        padding-bottom: 2.4rem;
+        padding-top: 1.4rem;
+        padding-bottom: 2.2rem;
         max-width: 920px;
       }}
 
@@ -221,7 +226,7 @@ st.markdown(
       /* Hero */
       .hero {{
         text-align: center;
-        margin-bottom: 1.2rem;
+        margin-bottom: 1.15rem;
       }}
       .hero h1 {{
         font-size: 2.08rem;
@@ -247,19 +252,19 @@ st.markdown(
         text-decoration: none !important;
 
         background: linear-gradient(180deg,
-          rgba(246,231,203,0.09),
-          rgba(135,58,28,0.20),
+          rgba(246,231,203,0.10),
+          rgba(135,58,28,0.24),
           rgba(11,7,6,0.62)
         );
 
-        border: 1px solid rgba(237,158,31,0.40);
+        border: 1px solid rgba(237,158,31,0.42);
         box-shadow: 0 14px 34px rgba(0,0,0,0.45);
         transition: transform 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
       }}
 
       a.link-card:hover {{
         transform: translateY(-2px);
-        border-color: rgba(237,158,31,0.90);
+        border-color: rgba(237,158,31,0.92);
         box-shadow: 0 18px 46px rgba(0,0,0,0.60),
                     0 0 0 7px rgba(237,158,31,0.10);
       }}
@@ -271,15 +276,16 @@ st.markdown(
         place-items: center;
         border-radius: 16px;
 
-        background: rgba(237,158,31,0.28);
-        border: 1px solid rgba(237,158,31,0.80);
+        background: rgba(237,158,31,0.30);
+        border: 1px solid rgba(237,158,31,0.85);
         overflow: hidden;
       }}
 
+      /* aqui é o que faz virar “imagem” no lugar do ícone */
       .link-icon-img {{
         width: 100%;
         height: 100%;
-        object-fit: cover; /* imagem como "foto" no quadradinho */
+        object-fit: cover; /* preenche o quadradinho */
         display: block;
       }}
 
@@ -304,7 +310,7 @@ st.markdown(
       section[data-testid="stSidebar"] {{
         background: linear-gradient(180deg,
           rgba(246,231,203,0.05),
-          rgba(135,58,28,0.10),
+          rgba(135,58,28,0.12),
           rgba(11,7,6,0.80)
         );
         border-right: 1px solid rgba(237,158,31,0.22);
@@ -324,7 +330,7 @@ st.markdown(
         text-align: center;
         opacity: 0.82;
         font-size: 0.9rem;
-        margin-top: 1.25rem;
+        margin-top: 1.2rem;
       }}
     </style>
     """,
@@ -332,7 +338,7 @@ st.markdown(
 )
 
 # ----------------------------
-# Sidebar (Admin)
+# Sidebar
 # ----------------------------
 with st.sidebar:
     st.header("⚙️ Configurações")
@@ -351,12 +357,12 @@ if admin_mode:
 # ----------------------------
 logo_path = find_logo_path()
 if logo_path:
-    data_uri = build_data_uri(logo_path)
-    if data_uri:
+    logo_uri = build_data_uri(logo_path)
+    if logo_uri:
         st.markdown(
             f"""
             <div class="logo-wrap">
-              <img src="{data_uri}" alt="Logo Muniz" />
+              <img src="{logo_uri}" alt="Logo Muniz" />
             </div>
             """,
             unsafe_allow_html=True,
@@ -373,7 +379,7 @@ st.markdown(
 )
 
 # ----------------------------
-# Tabs view
+# Tabs
 # ----------------------------
 if not tabs:
     tabs = [{"name": "Principais", "items": []}]
@@ -388,16 +394,16 @@ for idx, tab in enumerate(tabs):
         for i, item in enumerate(items):
             label = item.get("label", "Link")
             url = item.get("url", "")
-            icon_image = item.get("icon_image")
+            arquivo = item.get("arquivo")  # <- AQUI: campo que você pediu
 
             with cols[i % columns]:
                 if is_valid_url(url):
-                    render_button(label, url, icon_image)
+                    render_button(label, url, arquivo)
                 else:
                     st.warning(f"URL inválida em: {label}")
 
 # ----------------------------
-# Admin panel
+# Admin editor
 # ----------------------------
 if admin_mode:
     st.divider()
@@ -418,16 +424,16 @@ if admin_mode:
 
     with col_a:
         current_tab["name"] = st.text_input("Nome da aba", value=current_tab.get("name", tab_to_edit)).strip() or "Aba"
-        st.caption("Preencha icon_image com o caminho do arquivo (ex: icones/whatsapp.jpg).")
+        st.caption("Coloque o caminho em 'arquivo' ex: icons/whatsapp.jpg")
 
         edited = st.data_editor(
             current_tab.get("items", []),
             use_container_width=True,
             num_rows="dynamic",
             column_config={
-                "label": st.column_config.TextColumn("Título do botão", required=True),
-                "url": st.column_config.TextColumn("URL (https://...)", required=True),
-                "icon_image": st.column_config.TextColumn("Ícone (arquivo) ex: icones/whatsapp.jpg", required=False),
+                "label": st.column_config.TextColumn("Título", required=True),
+                "url": st.column_config.TextColumn("URL", required=True),
+                "arquivo": st.column_config.TextColumn("Arquivo da imagem (ex: icons/whatsapp.jpg)", required=False),
             },
             hide_index=True,
         )
@@ -455,9 +461,9 @@ if admin_mode:
                     u = (it.get("url") or "").strip()
                     if u and not is_valid_url(u):
                         errors.append(f"URL inválida: {it.get('label','(sem título)')} → {u}")
-                    img = (it.get("icon_image") or "").strip()
-                    if img and not os.path.exists(img):
-                        errors.append(f"Ícone (arquivo) não encontrado: {it.get('label','(sem título)')} → {img}")
+                    arq = (it.get("arquivo") or "").strip()
+                    if arq and not os.path.exists(arq):
+                        errors.append(f"Arquivo não encontrado: {it.get('label','(sem título)')} → {arq}")
 
             if errors:
                 st.error("Corrija antes de salvar:\n- " + "\n- ".join(errors))
