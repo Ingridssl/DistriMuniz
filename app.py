@@ -45,7 +45,6 @@ def is_valid_url(url: str) -> bool:
 # Files
 # ----------------------------
 def find_logo_path() -> str | None:
-    # prioriza PNG transparente
     for name in ["logo.png", "logo.webp", "logo.jpg", "logo.jpeg"]:
         if os.path.exists(name):
             return name
@@ -92,17 +91,13 @@ def get_admin_password() -> str:
     return os.getenv("ADMIN_PASSWORD", "")
 
 
-def admin_login_ui(where: str = "main") -> bool:
-    """Retorna True se admin está logado; renderiza login onde for chamado."""
+def admin_login_ui() -> bool:
     if st.session_state.get("admin_ok"):
         return True
 
     admin_password = get_admin_password()
     if not admin_password:
-        if where == "sidebar":
-            st.error("Senha de admin não configurada (ADMIN_PASSWORD).")
-        else:
-            st.warning("Senha de admin não configurada (ADMIN_PASSWORD).")
+        st.warning("Senha de admin não configurada (ADMIN_PASSWORD).")
         return False
 
     typed = st.text_input("Senha do Admin", type="password", placeholder="Digite a senha")
@@ -123,7 +118,6 @@ def admin_login_ui(where: str = "main") -> bool:
             st.rerun()
         else:
             st.error("Senha incorreta.")
-
     return False
 
 
@@ -164,8 +158,9 @@ columns = int(site.get("columns", 2))
 title = site.get("title", "Muniz Distribuidora | Links")
 subtitle = site.get("subtitle", "Acesse nossos canais oficiais")
 
+
 # ----------------------------
-# Styles (degradê + logo livre + ícones em badge preta)
+# Styles
 # ----------------------------
 st.markdown(
     f"""
@@ -177,12 +172,10 @@ st.markdown(
         --cream: {PALETTE["cream"]};
       }}
 
-      /* não esconder totalmente o header; só tirar o fundo para não “tapar” */
       header[data-testid="stHeader"] {{
         background: transparent !important;
       }}
 
-      /* dá espaço suficiente no topo para a barra do navegador/whats não encostar na logo */
       .block-container {{
         padding-top: 2.8rem !important;
         padding-bottom: 2.2rem;
@@ -211,20 +204,32 @@ st.markdown(
         color: var(--cream) !important;
       }}
 
-      /* LOGO: sem corte, sem círculo. Quando for PNG transparente, fica perfeito */
+      /* LOGO: círculo perfeito, sem laterais quadradas */
       .logo-wrap {{
         display: flex;
         justify-content: center;
         margin: 0 0 12px 0;
       }}
-      .logo-wrap img {{
-        width: min(240px, 62vw);
-        height: auto;
-        object-fit: contain;
+      .logo-circle {{
+        width: 170px;
+        height: 170px;
+        border-radius: 999px;
+        overflow: hidden; /* isso corta qualquer “lateral” */
+        border: 2px solid rgba(237,158,31,0.65);
+        background: rgba(11,7,6,0.55);
+        box-shadow: 0 18px 44px rgba(0,0,0,0.45);
+      }}
+      .logo-circle img {{
+        width: 100%;
+        height: 100%;
+        object-fit: cover; /* preenche o círculo */
         display: block;
-        background: transparent;
-        border: none;
-        box-shadow: 0 18px 44px rgba(0,0,0,0.35);
+      }}
+      @media (max-width: 640px) {{
+        .logo-circle {{
+          width: 150px;
+          height: 150px;
+        }}
       }}
 
       .hero {{
@@ -273,7 +278,7 @@ st.markdown(
         display: grid;
         place-items: center;
         border-radius: 16px;
-        background: rgba(11,7,6,1) !important; /* preto */
+        background: rgba(11,7,6,1) !important;
         border: 1px solid rgba(237,158,31,0.85);
         overflow: hidden;
       }}
@@ -302,17 +307,32 @@ st.markdown(
       div[data-testid="stTabs"] button[aria-selected="true"] {{
         border-bottom: 3px solid var(--accent) !important;
       }}
+
+      /* Footer/Admin no final */
+      .footer-admin {{
+        margin-top: 26px;
+        padding-top: 18px;
+        border-top: 1px solid rgba(237,158,31,0.22);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+      }}
+      .footer-note {{
+        opacity: 0.8;
+        font-size: 0.92rem;
+      }}
     </style>
     """,
     unsafe_allow_html=True,
 )
 
 # ----------------------------
-# Sidebar (continua existindo)
+# Sidebar (admin continua acessível pela lateral)
 # ----------------------------
 with st.sidebar:
     st.header("⚙️ Configurações")
-    st.caption("Você também pode abrir o Admin pelo botão na página.")
+    st.caption("A lateral pode ser aberta pelo botão (>>) no topo.")
     if st.session_state.get("admin_ok"):
         if st.button("Sair do Admin", use_container_width=True):
             st.session_state["admin_ok"] = False
@@ -328,7 +348,9 @@ if logo_path:
         st.markdown(
             f"""
             <div class="logo-wrap">
-              <img src="{logo_uri}" alt="Logo Muniz" />
+              <div class="logo-circle">
+                <img src="{logo_uri}" alt="Logo Muniz" />
+              </div>
             </div>
             """,
             unsafe_allow_html=True,
@@ -343,22 +365,6 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
-
-# ----------------------------
-# Botão Admin na PÁGINA (para celular/Whats)
-# ----------------------------
-with st.container():
-    c1, c2 = st.columns([1, 2])
-    with c1:
-        if st.button("🔒 Área do Admin", use_container_width=True):
-            st.session_state["show_admin"] = True
-    with c2:
-        st.caption("Acesso protegido por senha.")
-
-if st.session_state.get("show_admin") and not st.session_state.get("admin_ok"):
-    st.subheader("🔒 Login Admin")
-    admin_login_ui(where="main")
-    st.divider()
 
 # ----------------------------
 # Tabs
@@ -385,10 +391,25 @@ for idx, tab in enumerate(tabs):
                     st.warning(f"URL inválida em: {label}")
 
 # ----------------------------
-# Admin editor (aparece se logado)
+# Footer + Botão Admin (NO FINAL)
 # ----------------------------
-if st.session_state.get("admin_ok"):
+st.markdown('<div class="footer-admin">', unsafe_allow_html=True)
+c1, c2 = st.columns([1, 2])
+with c1:
+    if st.button("🔒 Área do Admin", use_container_width=True):
+        st.session_state["show_admin"] = True
+with c2:
+    st.markdown('<div class="footer-note">Acesso protegido por senha.</div>', unsafe_allow_html=True)
+st.markdown("</div>", unsafe_allow_html=True)
+
+# Login Admin (aparece no final)
+if st.session_state.get("show_admin") and not st.session_state.get("admin_ok"):
+    st.subheader("🔒 Login Admin")
+    admin_login_ui()
     st.divider()
+
+# Painel Admin (se logado)
+if st.session_state.get("admin_ok"):
     st.subheader("🛠️ Painel Admin")
 
     with st.expander("Aparência", expanded=False):
@@ -418,14 +439,14 @@ if st.session_state.get("admin_ok"):
     )
     current_tab["items"] = edited
 
-    colx, coly = st.columns([1, 1])
-    with colx:
+    cc1, cc2 = st.columns([1, 1])
+    with cc1:
         if st.button("💾 Salvar alterações", use_container_width=True):
             data["tabs"] = tabs
             save_data(data)
             st.success("Salvo em links.json!")
             st.rerun()
-    with coly:
+    with cc2:
         if st.button("Ocultar Admin", use_container_width=True):
             st.session_state["show_admin"] = False
             st.rerun()
