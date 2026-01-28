@@ -15,6 +15,9 @@ PALETTE = {
 }
 
 
+# ----------------------------
+# Data
+# ----------------------------
 def load_data() -> dict:
     if not os.path.exists(DATA_FILE):
         return {
@@ -38,8 +41,12 @@ def is_valid_url(url: str) -> bool:
         return False
 
 
+# ----------------------------
+# Files
+# ----------------------------
 def find_logo_path() -> str | None:
-    for name in ["logo.png", "logo.jpg", "logo.jpeg"]:
+    # prioriza PNG transparente
+    for name in ["logo.png", "logo.webp", "logo.jpg", "logo.jpeg"]:
         if os.path.exists(name):
             return name
     return None
@@ -73,6 +80,9 @@ def build_data_uri(path: str) -> str | None:
     return f"data:{mime};base64,{b64}"
 
 
+# ----------------------------
+# Admin auth
+# ----------------------------
 def get_admin_password() -> str:
     try:
         if "ADMIN_PASSWORD" in st.secrets:
@@ -82,19 +92,21 @@ def get_admin_password() -> str:
     return os.getenv("ADMIN_PASSWORD", "")
 
 
-def admin_gate() -> bool:
+def admin_login_ui(where: str = "main") -> bool:
+    """Retorna True se admin está logado; renderiza login onde for chamado."""
     if st.session_state.get("admin_ok"):
         return True
 
     admin_password = get_admin_password()
     if not admin_password:
-        st.sidebar.error("Senha de admin não configurada (ADMIN_PASSWORD).")
+        if where == "sidebar":
+            st.error("Senha de admin não configurada (ADMIN_PASSWORD).")
+        else:
+            st.warning("Senha de admin não configurada (ADMIN_PASSWORD).")
         return False
 
-    st.sidebar.subheader("🔒 Acesso Admin")
-    typed = st.sidebar.text_input("Senha", type="password", placeholder="Digite a senha do admin")
-
-    c1, c2 = st.sidebar.columns([1, 1])
+    typed = st.text_input("Senha do Admin", type="password", placeholder="Digite a senha")
+    c1, c2 = st.columns([1, 1])
     with c1:
         entrar = st.button("Entrar", use_container_width=True)
     with c2:
@@ -107,13 +119,17 @@ def admin_gate() -> bool:
     if entrar:
         if typed == admin_password:
             st.session_state["admin_ok"] = True
-            st.sidebar.success("Acesso liberado.")
+            st.success("Acesso liberado.")
             st.rerun()
         else:
-            st.sidebar.error("Senha incorreta.")
+            st.error("Senha incorreta.")
+
     return False
 
 
+# ----------------------------
+# UI
+# ----------------------------
 def render_button(label: str, url: str, arquivo: str | None):
     label = (label or "").strip()
     url = (url or "").strip()
@@ -135,6 +151,9 @@ def render_button(label: str, url: str, arquivo: str | None):
     )
 
 
+# ----------------------------
+# Page config
+# ----------------------------
 st.set_page_config(page_title="Muniz | Links", page_icon="🔗", layout="centered")
 
 data = load_data()
@@ -145,6 +164,9 @@ columns = int(site.get("columns", 2))
 title = site.get("title", "Muniz Distribuidora | Links")
 subtitle = site.get("subtitle", "Acesse nossos canais oficiais")
 
+# ----------------------------
+# Styles (degradê + logo livre + ícones em badge preta)
+# ----------------------------
 st.markdown(
     f"""
     <style>
@@ -155,25 +177,20 @@ st.markdown(
         --cream: {PALETTE["cream"]};
       }}
 
-      /* some header interno (evita sobrepor) */
+      /* não esconder totalmente o header; só tirar o fundo para não “tapar” */
       header[data-testid="stHeader"] {{
         background: transparent !important;
-        height: 0px !important;
-      }}
-      div[data-testid="stToolbar"] {{
-        visibility: hidden !important;
-        height: 0px !important;
       }}
 
-      /* empurra conteúdo pra baixo (webview/whats/streamlit cloud) */
+      /* dá espaço suficiente no topo para a barra do navegador/whats não encostar na logo */
       .block-container {{
-        padding-top: 3.8rem !important;
+        padding-top: 2.8rem !important;
         padding-bottom: 2.2rem;
         max-width: 920px;
       }}
       @media (max-width: 640px) {{
         .block-container {{
-          padding-top: 5.2rem !important;
+          padding-top: 4.2rem !important;
         }}
       }}
 
@@ -194,27 +211,20 @@ st.markdown(
         color: var(--cream) !important;
       }}
 
-      /* LOGO: sem corte, sem bug. badge preta por trás */
+      /* LOGO: sem corte, sem círculo. Quando for PNG transparente, fica perfeito */
       .logo-wrap {{
         display: flex;
         justify-content: center;
         margin: 0 0 12px 0;
       }}
-      .logo-badge {{
-        background: rgba(11,7,6,0.85);
-        border-radius: 18px;
-        padding: 14px 18px;
-        border: 1px solid rgba(237,158,31,0.45);
-        box-shadow: 0 18px 44px rgba(0,0,0,0.55);
-      }}
-      .logo-badge img {{
+      .logo-wrap img {{
         width: min(240px, 62vw);
         height: auto;
         object-fit: contain;
         display: block;
-
-        /* ajuda a “puxar” o branco sem apagar a arte */
-        filter: contrast(1.05) saturate(1.08);
+        background: transparent;
+        border: none;
+        box-shadow: 0 18px 44px rgba(0,0,0,0.35);
       }}
 
       .hero {{
@@ -241,7 +251,6 @@ st.markdown(
         margin: 12px 0;
         border-radius: 18px;
         text-decoration: none !important;
-
         background: linear-gradient(180deg,
           rgba(246,231,203,0.10),
           rgba(135,58,28,0.24),
@@ -264,7 +273,7 @@ st.markdown(
         display: grid;
         place-items: center;
         border-radius: 16px;
-        background: rgba(11,7,6,1) !important;
+        background: rgba(11,7,6,1) !important; /* preto */
         border: 1px solid rgba(237,158,31,0.85);
         overflow: hidden;
       }}
@@ -298,18 +307,20 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+# ----------------------------
+# Sidebar (continua existindo)
+# ----------------------------
 with st.sidebar:
     st.header("⚙️ Configurações")
-    st.caption("Área pública: links. Área admin: protegida por senha.")
-
-admin_mode = admin_gate()
-
-if admin_mode:
-    with st.sidebar:
+    st.caption("Você também pode abrir o Admin pelo botão na página.")
+    if st.session_state.get("admin_ok"):
         if st.button("Sair do Admin", use_container_width=True):
             st.session_state["admin_ok"] = False
             st.rerun()
 
+# ----------------------------
+# Logo + Hero
+# ----------------------------
 logo_path = find_logo_path()
 if logo_path:
     logo_uri = build_data_uri(logo_path)
@@ -317,9 +328,7 @@ if logo_path:
         st.markdown(
             f"""
             <div class="logo-wrap">
-              <div class="logo-badge">
-                <img src="{logo_uri}" alt="Logo Muniz" />
-              </div>
+              <img src="{logo_uri}" alt="Logo Muniz" />
             </div>
             """,
             unsafe_allow_html=True,
@@ -335,6 +344,25 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+# ----------------------------
+# Botão Admin na PÁGINA (para celular/Whats)
+# ----------------------------
+with st.container():
+    c1, c2 = st.columns([1, 2])
+    with c1:
+        if st.button("🔒 Área do Admin", use_container_width=True):
+            st.session_state["show_admin"] = True
+    with c2:
+        st.caption("Acesso protegido por senha.")
+
+if st.session_state.get("show_admin") and not st.session_state.get("admin_ok"):
+    st.subheader("🔒 Login Admin")
+    admin_login_ui(where="main")
+    st.divider()
+
+# ----------------------------
+# Tabs
+# ----------------------------
 if not tabs:
     tabs = [{"name": "Principais", "items": []}]
 
@@ -356,7 +384,10 @@ for idx, tab in enumerate(tabs):
                 else:
                     st.warning(f"URL inválida em: {label}")
 
-if admin_mode:
+# ----------------------------
+# Admin editor (aparece se logado)
+# ----------------------------
+if st.session_state.get("admin_ok"):
     st.divider()
     st.subheader("🛠️ Painel Admin")
 
@@ -371,28 +402,30 @@ if admin_mode:
     tab_index = tab_names.index(tab_to_edit)
     current_tab = tabs[tab_index]
 
-    col_a, col_b = st.columns([2, 1])
+    current_tab["name"] = st.text_input("Nome da aba", value=current_tab.get("name", tab_to_edit)).strip() or "Aba"
+    st.caption("Em 'arquivo', use: icons/instagram.jpg")
 
-    with col_a:
-        current_tab["name"] = st.text_input("Nome da aba", value=current_tab.get("name", tab_to_edit)).strip() or "Aba"
-        st.caption("Em 'arquivo', use: icons/instagram.jpg")
+    edited = st.data_editor(
+        current_tab.get("items", []),
+        use_container_width=True,
+        num_rows="dynamic",
+        column_config={
+            "label": st.column_config.TextColumn("Título", required=True),
+            "url": st.column_config.TextColumn("URL", required=True),
+            "arquivo": st.column_config.TextColumn("Arquivo imagem (ex: icons/whatsapp.jpg)", required=False),
+        },
+        hide_index=True,
+    )
+    current_tab["items"] = edited
 
-        edited = st.data_editor(
-            current_tab.get("items", []),
-            use_container_width=True,
-            num_rows="dynamic",
-            column_config={
-                "label": st.column_config.TextColumn("Título", required=True),
-                "url": st.column_config.TextColumn("URL", required=True),
-                "arquivo": st.column_config.TextColumn("Arquivo imagem (ex: icons/whatsapp.jpg)", required=False),
-            },
-            hide_index=True,
-        )
-        current_tab["items"] = edited
-
-    with col_b:
-        if st.button("💾 Salvar alterações"):
+    colx, coly = st.columns([1, 1])
+    with colx:
+        if st.button("💾 Salvar alterações", use_container_width=True):
             data["tabs"] = tabs
             save_data(data)
             st.success("Salvo em links.json!")
+            st.rerun()
+    with coly:
+        if st.button("Ocultar Admin", use_container_width=True):
+            st.session_state["show_admin"] = False
             st.rerun()
