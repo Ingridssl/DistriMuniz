@@ -15,17 +15,10 @@ PALETTE = {
 }
 
 
-# ----------------------------
-# Data
-# ----------------------------
 def load_data() -> dict:
     if not os.path.exists(DATA_FILE):
         return {
-            "site": {
-                "title": "Muniz Distribuidora | Links",
-                "subtitle": "Acesse nossos canais oficiais",
-                "columns": 2,
-            },
+            "site": {"title": "Muniz Distribuidora | Links", "subtitle": "Acesse nossos canais oficiais", "columns": 2},
             "tabs": [{"name": "Principais", "items": []}],
         }
     with open(DATA_FILE, "r", encoding="utf-8") as f:
@@ -45,9 +38,6 @@ def is_valid_url(url: str) -> bool:
         return False
 
 
-# ----------------------------
-# Files (logo + imagens dos botões)
-# ----------------------------
 def find_logo_path() -> str | None:
     for name in ["logo.png", "logo.jpg", "logo.jpeg"]:
         if os.path.exists(name):
@@ -83,9 +73,6 @@ def build_data_uri(path: str) -> str | None:
     return f"data:{mime};base64,{b64}"
 
 
-# ----------------------------
-# Admin (senha)
-# ----------------------------
 def get_admin_password() -> str:
     try:
         if "ADMIN_PASSWORD" in st.secrets:
@@ -127,9 +114,6 @@ def admin_gate() -> bool:
     return False
 
 
-# ----------------------------
-# UI
-# ----------------------------
 def render_button(label: str, url: str, arquivo: str | None):
     label = (label or "").strip()
     url = (url or "").strip()
@@ -151,9 +135,6 @@ def render_button(label: str, url: str, arquivo: str | None):
     )
 
 
-# ----------------------------
-# Page config
-# ----------------------------
 st.set_page_config(page_title="Muniz | Links", page_icon="🔗", layout="centered")
 
 data = load_data()
@@ -164,10 +145,6 @@ columns = int(site.get("columns", 2))
 title = site.get("title", "Muniz Distribuidora | Links")
 subtitle = site.get("subtitle", "Acesse nossos canais oficiais")
 
-
-# ----------------------------
-# Styles (push down + logo sem branco + degradê)
-# ----------------------------
 st.markdown(
     f"""
     <style>
@@ -178,7 +155,7 @@ st.markdown(
         --cream: {PALETTE["cream"]};
       }}
 
-      /* Remove/neutraliza header interno do Streamlit (o do app) */
+      /* some header interno (evita sobrepor) */
       header[data-testid="stHeader"] {{
         background: transparent !important;
         height: 0px !important;
@@ -188,15 +165,15 @@ st.markdown(
         height: 0px !important;
       }}
 
-      /* Empurra conteúdo para não ficar sob a barra superior (Cloud/Whats) */
+      /* empurra conteúdo pra baixo (webview/whats/streamlit cloud) */
       .block-container {{
-        padding-top: 4.2rem !important;
+        padding-top: 3.8rem !important;
         padding-bottom: 2.2rem;
         max-width: 920px;
       }}
       @media (max-width: 640px) {{
         .block-container {{
-          padding-top: 5.4rem !important;
+          padding-top: 5.2rem !important;
         }}
       }}
 
@@ -217,30 +194,29 @@ st.markdown(
         color: var(--cream) !important;
       }}
 
-      /* LOGO: fundo preto atrás + remove “branco” por blend-mode */
+      /* LOGO: sem corte, sem bug. badge preta por trás */
       .logo-wrap {{
         display: flex;
         justify-content: center;
         margin: 0 0 12px 0;
       }}
       .logo-badge {{
-        background: rgba(11,7,6,1);
-        border-radius: 16px;
-        padding: 10px 14px;
+        background: rgba(11,7,6,0.85);
+        border-radius: 18px;
+        padding: 14px 18px;
         border: 1px solid rgba(237,158,31,0.45);
         box-shadow: 0 18px 44px rgba(0,0,0,0.55);
       }}
       .logo-badge img {{
-        width: min(230px, 62vw);
+        width: min(240px, 62vw);
         height: auto;
         object-fit: contain;
         display: block;
 
-        /* truque que faz branco virar “transparente” em fundo escuro */
-        mix-blend-mode: multiply;
+        /* ajuda a “puxar” o branco sem apagar a arte */
+        filter: contrast(1.05) saturate(1.08);
       }}
 
-      /* Hero */
       .hero {{
         text-align: center;
         margin-bottom: 1.15rem;
@@ -255,10 +231,8 @@ st.markdown(
       .hero p {{
         margin: 0.45rem 0 0;
         opacity: 0.95;
-        color: var(--cream) !important;
       }}
 
-      /* Cards */
       a.link-card {{
         display: flex;
         align-items: center;
@@ -273,12 +247,10 @@ st.markdown(
           rgba(135,58,28,0.24),
           rgba(11,7,6,0.62)
         );
-
         border: 1px solid rgba(237,158,31,0.42);
         box-shadow: 0 14px 34px rgba(0,0,0,0.45);
         transition: transform 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
       }}
-
       a.link-card:hover {{
         transform: translateY(-2px);
         border-color: rgba(237,158,31,0.92);
@@ -286,14 +258,12 @@ st.markdown(
                     0 0 0 7px rgba(237,158,31,0.10);
       }}
 
-      /* Ícone: badge preta */
       .link-icon {{
         width: 52px;
         height: 52px;
         display: grid;
         place-items: center;
         border-radius: 16px;
-
         background: rgba(11,7,6,1) !important;
         border: 1px solid rgba(237,158,31,0.85);
         overflow: hidden;
@@ -304,45 +274,30 @@ st.markdown(
         object-fit: contain;
         display: block;
       }}
-      .link-icon-fallback {{
-        font-size: 18px;
-      }}
 
       .link-text {{
         font-size: 1.04rem;
         font-weight: 780;
-        color: var(--cream) !important;
         flex: 1;
       }}
       .link-arrow {{
         color: var(--accent) !important;
         font-weight: 900;
-        opacity: 1;
       }}
 
-      /* Sidebar */
       section[data-testid="stSidebar"] {{
         background: rgba(11,7,6,0.92);
         border-right: 1px solid rgba(237,158,31,0.22);
       }}
 
-      /* Tabs */
-      div[data-testid="stTabs"] button {{
-        color: var(--cream) !important;
-        opacity: 0.9;
-      }}
       div[data-testid="stTabs"] button[aria-selected="true"] {{
         border-bottom: 3px solid var(--accent) !important;
-        opacity: 1;
       }}
     </style>
     """,
     unsafe_allow_html=True,
 )
 
-# ----------------------------
-# Sidebar
-# ----------------------------
 with st.sidebar:
     st.header("⚙️ Configurações")
     st.caption("Área pública: links. Área admin: protegida por senha.")
@@ -355,9 +310,6 @@ if admin_mode:
             st.session_state["admin_ok"] = False
             st.rerun()
 
-# ----------------------------
-# Logo + Hero
-# ----------------------------
 logo_path = find_logo_path()
 if logo_path:
     logo_uri = build_data_uri(logo_path)
@@ -383,9 +335,6 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# ----------------------------
-# Tabs
-# ----------------------------
 if not tabs:
     tabs = [{"name": "Principais", "items": []}]
 
@@ -407,9 +356,6 @@ for idx, tab in enumerate(tabs):
                 else:
                     st.warning(f"URL inválida em: {label}")
 
-# ----------------------------
-# Admin editor
-# ----------------------------
 if admin_mode:
     st.divider()
     st.subheader("🛠️ Painel Admin")
@@ -445,35 +391,8 @@ if admin_mode:
         current_tab["items"] = edited
 
     with col_b:
-        st.markdown("#### Ações")
-        if st.button("➕ Criar nova aba"):
-            tabs.append({"name": "Nova Aba", "items": []})
-            st.success("Aba criada!")
-            st.rerun()
-
-        if len(tabs) > 1 and st.button("🗑️ Excluir esta aba"):
-            tabs.pop(tab_index)
-            st.success("Aba excluída.")
-            st.rerun()
-
-        st.markdown("---")
         if st.button("💾 Salvar alterações"):
-            errors = []
-            for t in tabs:
-                if not (t.get("name") or "").strip():
-                    errors.append("Existe uma aba sem nome.")
-                for it in t.get("items", []):
-                    u = (it.get("url") or "").strip()
-                    if u and not is_valid_url(u):
-                        errors.append(f"URL inválida: {it.get('label','(sem título)')} → {u}")
-                    arq = (it.get("arquivo") or "").strip()
-                    if arq and not os.path.exists(arq):
-                        errors.append(f"Arquivo não encontrado: {it.get('label','(sem título)')} → {arq}")
-
-            if errors:
-                st.error("Corrija antes de salvar:\n- " + "\n- ".join(errors))
-            else:
-                data["tabs"] = tabs
-                save_data(data)
-                st.success("Salvo em links.json!")
-                st.rerun()
+            data["tabs"] = tabs
+            save_data(data)
+            st.success("Salvo em links.json!")
+            st.rerun()
