@@ -17,7 +17,7 @@
         { "label": "WhatsApp", "url": "https://wa.me/5593992317979", "icon": "💬" },
         { "label": "Instagram", "url": "https://www.instagram.com/distrimuniz/", "icon": "📷" },
         { "label": "iFood", "url": "https://www.ifood.com.br/delivery/sua-loja", "icon": "🍔" },
-        { "label": "Zé Delivery", "url": "https://www.ze.delivery/", "icon": "🍺" }
+        { "label": "Zé Delivery", "url": "https://www.ze.delivery/", "icon_image": "zedelivery.webp", "icon": "🍺" }
       ]
     }
   ]
