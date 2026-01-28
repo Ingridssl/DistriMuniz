@@ -8,8 +8,14 @@
     {
       "name": "Principais",
       "items": [
-        { "label": "WhatsApp", "url": "https://wa.me/5591999999999", "icon": "💬" },
-        { "label": "Instagram", "url": "https://instagram.com/suaempresa", "icon": "📷" },
+        { "label": "Catálogo de Bebidas", "url": "https://distribuidoramuniz.smartpos.app/", "icon": "📒" },
+        {
+          "label": "Localização",
+          "url": "https://www.google.com/maps/search/?api=1&query=R.%20%C3%81lvaro%20Adolfo%2C%201003%20-%20Prainha%2C%20Santar%C3%A9m%20-%20PA%2C%2068010-295",
+          "icon": "📍"
+        },
+        { "label": "WhatsApp", "url": "https://wa.me/5593992317979", "icon": "💬" },
+        { "label": "Instagram", "url": "https://www.instagram.com/distrimuniz/", "icon": "📷" },
         { "label": "iFood", "url": "https://www.ifood.com.br/delivery/sua-loja", "icon": "🍔" },
         { "label": "Zé Delivery", "url": "https://www.ze.delivery/", "icon": "🍺" }
       ]
