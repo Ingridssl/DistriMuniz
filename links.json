@@ -1,0 +1,18 @@
+{
+  "site": {
+    "title": "Muniz Distribuidora | Links",
+    "subtitle": "Acesse nossos canais oficiais",
+    "columns": 2
+  },
+  "tabs": [
+    {
+      "name": "Principais",
+      "items": [
+        { "label": "WhatsApp", "url": "https://wa.me/5591999999999", "icon": "💬" },
+        { "label": "Instagram", "url": "https://instagram.com/suaempresa", "icon": "📷" },
+        { "label": "iFood", "url": "https://www.ifood.com.br/delivery/sua-loja", "icon": "🍔" },
+        { "label": "Zé Delivery", "url": "https://www.ze.delivery/", "icon": "🍺" }
+      ]
+    }
+  ]
+}
